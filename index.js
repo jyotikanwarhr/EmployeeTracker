@@ -318,7 +318,8 @@ async function viewEmployees() {
 // Function to delete a department
 async function deleteDepartment() {
     try {
-        const { rows: departments } = await pool.query("SELECT id as value, name as name FROM department");
+        const result = await pool.query("SELECT id as value, name as name FROM department");
+        const departments = result.rows;
         console.log("Departments:", departments);
 
         if (departments.length === 0) {
@@ -331,41 +332,27 @@ async function deleteDepartment() {
                 type: "list",
                 name: "department_id",
                 message: "Select the department you want to delete:",
-                choices: departments.map(department => ({
-                    value: department.value,
-                    name: department.name,
-                })),
-            },
+                choices: departments,
+                },
         ]);
-        console.log("Selected department ID:", department_id);
-        // Check if the department exists
-        const checkDepartment = await pool.query("SELECT * FROM department WHERE id = $1", [department_id]);
-        if (checkDepartment.rowCount === 0) {
-            console.log(`Department with ID: ${department_id} does not exist.`);
+
+        // Check if there are any roles assigned to this department
+        const roleCheck = await pool.query("SELECT 1 FROM role WHERE department_id = $1", [department_id]);
+
+        if (roleCheck.rowCount > 0) {
+            console.log("❌ Cannot delete department: It has roles assigned. Please delete those roles first.");
             return;
         }
-        // Check if the department is associated with any roles or employees
-        const roleCount = await pool.query("SELECT COUNT(*) FROM role WHERE department_id = $1", [department_id]);
-        //const employeeCount = await pool.query("SELECT COUNT(*) FROM employee WHERE department_id = $1", [department_id]);
-        console.log("Role count:", roleCount.rows[0].count);
-        //console.log("Employee count:", employeeCount.rows[0].count);
-        // If there are associated roles or employees, prevent deletion
-        // Check if the department has any associated roles or employees
-        if (roleCount.rows[0].count > 0 || employeeCount.rows[0].count > 0) {
-            console.log(`Cannot delete department with ID: ${department_id} because it has associated roles.`);
-            return;
-        }
-    
-        // Delete the department
 
-        const result = await pool.query("DELETE FROM department WHERE id = $1", [department_id]);
-        console.log("Delete result:", result);
-        if (result.rowCount > 0) {
-            console.log(`Deleted department with ID: ${department_id}`);
+        // Safe to delete the department
+        const deleteResult = await pool.query("DELETE FROM department WHERE id = $1", [department_id]);
 
-    } else {
-            console.log(`Department with ID: ${department_id} not found.`);
+        if (deleteResult.rowCount > 0) {
+            console.log(`✅ Successfully deleted department with ID: ${department_id}`);
+        } else {
+            console.log("❌ Department not found or already deleted.");
         }
+
     } catch (err) {
         console.error("Error deleting department:", err);
     }
