@@ -96,7 +96,7 @@ Github repo link!
 
 # Walkthrough Video
 
-Click here to watch the walkthrough video - [Link]([url](https://app.screencastify.com/v3/watch/hJPdwR5z5R7rPkHVKy6b))
+Click here to watch the walkthrough video - https://app.screencastify.com/v3/watch/hJPdwR5z5R7rPkHVKy6b
 
 # License
 
